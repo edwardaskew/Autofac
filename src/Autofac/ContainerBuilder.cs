@@ -243,7 +243,7 @@ namespace Autofac
 
         private void RegisterDefaultAdapters(IComponentRegistry componentRegistry)
         {
-            this.RegisterGeneric(typeof(KeyedServiceIndex<,>)).As(typeof(IIndex<,>)).InstancePerLifetimeScope();
+            this.RegisterGeneric(typeof(KeyedServiceIndex<,>)).As(typeof(IIndex<,>), typeof(IReadOnlyDictionary<,>)).InstancePerLifetimeScope();
             componentRegistry.AddRegistrationSource(new CollectionRegistrationSource());
             componentRegistry.AddRegistrationSource(new OwnedInstanceRegistrationSource());
             componentRegistry.AddRegistrationSource(new MetaRegistrationSource());

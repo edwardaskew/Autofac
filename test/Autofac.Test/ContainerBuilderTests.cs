@@ -400,6 +400,17 @@ namespace Autofac.Test
         }
 
         [Fact]
+        public void ResolvingIReadOnlyDictionaryIsEquivalentToIIndex()
+        {
+            var container = new ContainerBuilder().Build();
+
+            var idx = container.Resolve<IIndex<int, string>>();
+            var dict = container.Resolve<IReadOnlyDictionary<int, string>>();
+
+            Assert.Same(idx, dict);
+        }
+
+        [Fact]
         public void AfterCallingBuild_SubsequentCallsFail()
         {
             var builder = new ContainerBuilder();

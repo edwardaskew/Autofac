@@ -24,11 +24,14 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using Autofac.Core;
 
 namespace Autofac.Features.Indexed
 {
-    internal class KeyedServiceIndex<TKey, TValue> : IIndex<TKey, TValue>
+    internal class KeyedServiceIndex<TKey, TValue> : IIndex<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>
     {
         private readonly IComponentContext _context;
 
@@ -40,6 +43,11 @@ namespace Autofac.Features.Indexed
         }
 
         public TValue this[TKey key] => (TValue)_context.ResolveService(GetService(key));
+
+        public bool ContainsKey(TKey key)
+        {
+            return _context.IsRegisteredWithKey<TValue>(key);
+        }
 
         public bool TryGetValue(TKey key, out TValue value)
         {
@@ -54,9 +62,30 @@ namespace Autofac.Features.Indexed
             return false;
         }
 
+        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => GetServices().Select(MakeKvp).GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+        public int Count => GetServices().Count();
+
+        public IEnumerable<TKey> Keys => GetServices().Select(ks => ks.ServiceKey).Cast<TKey>();
+
+        public IEnumerable<TValue> Values => this.Select(kvp => kvp.Value);
+
         private static KeyedService GetService(TKey key)
         {
             return new KeyedService(key, typeof(TValue));
+        }
+
+        private IEnumerable<KeyedService> GetServices() =>
+            _context.ComponentRegistry.Registrations
+                .SelectMany(r => r.Services)
+                .OfType<KeyedService>()
+                .Where(ks => ks.ServiceKey.GetType() == typeof(TKey) && ks.ServiceType == typeof(TValue));
+
+        private KeyValuePair<TKey, TValue> MakeKvp(KeyedService service)
+        {
+            return new KeyValuePair<TKey, TValue>((TKey)service.ServiceKey, (TValue)_context.ResolveService(service));
         }
     }
 }
